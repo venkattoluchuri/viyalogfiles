@@ -1,0 +1,6 @@
+# Default:
+# path_filepattern_moveto_list:
+#  - { path: /opt/sas/viya/config/var/log, pattern: "log-*.zip", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/log }
+#########################################
+path_filepattern_moveto_list:
+  - { path: /opt/sas/viya/config/var/log, pattern: "log-*.zip", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/log }
