@@ -1,3 +1,71 @@
+####################################################################
+#### log-cleanup-vars.yml                                       ####
+####################################################################
+#### Author: SAS Institute Inc.                                 ####
+####################################################################
+
+#########################################
+# Variables used in playbooks
+#########################################
+# For tempfile_rootname, choose something which is NOT the
+# first part of any filepath/name which is valuable, because
+# log-cleanup-list.yml will delete all files beginning with
+# this string (i.e. it deletes {{tempfile_rootname}}* on
+# the Ansible controller before it creates a new tempfile.
+# if you choose a short, generic name, this may delete more
+# files than you intend! E.g. /tmp/ is a bad choice, as it
+# would cause log-cleanup-list.yml to delete all files in /tmp.
+# Worse choices are possible, and we avoid suggesting them here!
+# Please choose something nice and unique for tempfile_rootname.
+#########################################
+# Defaults:
+# tempfile_rootname: /tmp/log-cleanup-list
+# tempfile_name: "{{tempfile_rootname}}.txt"
+#########################################
+tempfile_rootname: /tmp/log-cleanup-list
+tempfile_name: "{{tempfile_rootname}}.txt"
+
+# Set ensure_moveto_directories_exist to yes to have playbook
+# log-cleanup-move.yml create the moveto directories on each
+# host, if they do not already exist and a file will be moved
+# into them.
+# They are created as root:root, with a directory access mode
+# as specified in created_moveto_directory_mode.
+#########################################
+# Defaults:
+# ensure_moveto_directories_exist: no
+# created_moveto_directory_mode: 0777
+#########################################
+ensure_moveto_directories_exist: no
+created_moveto_directory_mode: 0777
+
+#########################################
+# Arrays used in playbooks
+#########################################
+# path_filepattern_moveto_list
+#########################################
+# path: a directory to search for files
+# pattern: the pattern of files to search for in that directory
+# use_regex: whether the pattern is a glob (use_regex: no)
+#            or a regular expression (use_regex: yes)
+# older_than_days: find only files older than this number of days
+# recurse: whether to search subdirectories below the path recursively
+# moveto: where to move the files we find to, if we want to move them
+#         N.B. moveto directory for each entry should *already exist*
+#         on each host where files matching the path and filename
+#         pattern could be found.
+#########################################
+# Examples:
+#path_filepattern_moveto_list:
+#  - { path: /opt/sas/viya/config/var/log, pattern: "log-*.zip", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/log }
+#  - { path: /opt/sas/viya/config/var/log/cas/default, pattern: "cas*.log", use_regex: no, older_than_days: 340, recurse: no, moveto: /tmp/cas }
+#
+# Additional examples for multi-tenant deployments:
+#  - { path: /opt/sas/tenantA/config/var/log, pattern: "log-*.zip", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/log_tenantA }
+#  - { path: /opt/sas/tenantB/config/var/log, pattern: "log-*.zip", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/log_tenantB }
+#  - { path: /opt/sas/tenantA/config/var/log/cas/default, pattern: "cas*.log", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/cas_tenantA }
+#  - { path: /opt/sas/tenantB/config/var/log/cas/default, pattern: "cas*.log", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/cas_tenantB }
+#########################################
 # Default:
 # path_filepattern_moveto_list:
 #  - { path: /opt/sas/viya/config/var/log, pattern: "log-*.zip", use_regex: no, older_than_days: 90, recurse: no, moveto: /tmp/log }
