@@ -1,0 +1,42 @@
+####################################################################
+#### log-cleanup-delete.yml                                     ####
+####################################################################
+#### Author: SAS Institute Inc.                                 ####
+####################################################################
+---
+####################################################################
+# Include tasks to find files matching specified patterns, and store
+# the result in a register called output_of_find.
+####################################################################
+
+- include: log-cleanup-find.yml
+
+###############################################################
+# Delete matching files
+###############################################################
+
+- hosts: sas-all
+  become: yes
+  become_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - log-cleanup-vars.yml
+  tasks:
+
+    #- name: Debug results
+    #  debug: msg="{{output_of_find.results}}"
+
+    - name: List files we intend to delete in the next task
+      debug: msg="About to delete {{ item[1].path }}"
+      with_subelements:
+        - "{{output_of_find.results}}"
+        - files
+      when: "item[0].matched > 0"
+     
+    - name: Delete files
+      file: path={{ item[1].path }} state=absent
+      with_subelements:
+        - "{{output_of_find.results}}"
+        - files
+      when: "item[0].matched > 0"
