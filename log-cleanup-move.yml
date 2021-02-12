@@ -1,0 +1,52 @@
+####################################################################
+#### log-cleanup-move.yml                                       ####
+####################################################################
+#### Author: SAS Institute Inc.                                 ####
+####################################################################
+---
+####################################################################
+# Include tasks to find files matching specified patterns, and store
+# the result in a register called output_of_find.
+####################################################################
+
+- include: log-cleanup-find.yml
+
+###############################################################
+# Move matching files
+###############################################################
+
+- hosts: sas-all
+  become: yes
+  become_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - log-cleanup-vars.yml
+  tasks:
+
+    #- name: Debug results
+    #  debug: msg="{{output_of_find.results}}"
+
+    - name: Print the move command we intend to issue in the next task
+      debug: msg="mv {{ item[1].path }} {{item[0].item.moveto}}/{{ item[1].path | basename}}"
+      with_subelements:
+        - "{{output_of_find.results}}"
+        - files
+      when: "item[0].matched > 0"
+      
+    - name: If ensure_moveto_directories_exist == yes, ensure moveto directories exist
+      file:
+        path: "{{item[0].item.moveto}}"
+        state: directory
+        mode: "{{created_moveto_directory_mode}}"
+      with_subelements:
+        - "{{output_of_find.results}}"
+        - files
+      when: "(item[0].matched > 0) and ensure_moveto_directories_exist"
+      
+    - name: Move files
+      command: mv {{ item[1].path }} {{item[0].item.moveto}}/{{ item[1].path | basename}}
+      with_subelements:
+        - "{{output_of_find.results}}"
+        - files
+      when: "item[0].matched > 0"
