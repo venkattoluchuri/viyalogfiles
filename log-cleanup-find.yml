@@ -1,0 +1,43 @@
+####################################################################
+#### log-cleanup-find.yml                                       ####
+####################################################################
+#### Author: SAS Institute Inc.                                 ####
+####################################################################
+---
+####################################################################
+# Tasks to find files matching specified patterns
+# This file creates a register called 'output_of_find' which is
+# used in the other log-cleanup playbooks.
+####################################################################
+
+- hosts: sas-all
+  become: yes
+  become_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - log-cleanup-vars.yml
+  tasks:
+    - name: Check the accessibility of the hosts
+      ping:
+
+    - name: Get lists of files on each host matching each pattern in path_filepattern_moveto_list
+      find:
+        paths: "{{item.path}}"
+        patterns: "{{item.pattern}}"
+        use_regex: "{{item.use_regex}}"
+        age: "{{item.older_than_days}}d"
+        recurse: "{{item.recurse}}"
+      register: output_of_find
+      with_items: '{{path_filepattern_moveto_list}}'
+    
+    - name: Display count of files on each host matching each pattern in path_filepattern_moveto_list
+      debug:
+        msg:
+         - 'Found {{item.matched}}/{{item.examined}} files in {{item.item.path}} matching pattern {{item.item.pattern}} older than {{item.item.older_than_days}} days old'
+      with_items: '{{output_of_find.results}}'
+        
+    - name: Display list of files on each host matching each pattern in path_filepattern_moveto_list
+      debug:
+        msg: "{{item.path}}"
+      with_items: "{{output_of_find.results | map(attribute='files') | list}}"
