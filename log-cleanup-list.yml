@@ -1,0 +1,67 @@
+####################################################################
+#### log-cleanup-list.yml                                       ####
+####################################################################
+#### Author: SAS Institute Inc.                                 ####
+####################################################################
+---
+####################################################################
+# Include tasks to find files matching specified patterns, and store
+# the result in a register called output_of_find.
+####################################################################
+
+- include: log-cleanup-find.yml
+
+###############################################################
+# Tasks to create text files listing matching files - cleanup
+###############################################################
+      
+
+- hosts: sas-all
+  become: yes
+  become_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - log-cleanup-vars.yml
+  tasks:
+    
+    #- name: Debug results
+    #  debug: msg="{{output_of_find.results}}"
+    
+    - name: Delete temp file on each host if it already exists
+      file: path={{tempfile_name}} state=absent
+
+- hosts: 127.0.0.1
+  become: yes
+  become_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - log-cleanup-vars.yml
+  tasks:
+    - name: Delete temp file on local host if it already exists
+      file: path={{item}} state=absent
+      with_fileglob: "{{tempfile_rootname}}*"
+
+#####################################################################
+# Tasks to create text files listing matching files - make and fetch
+#####################################################################
+      
+- hosts: sas-all
+  become: yes
+  become_user: root
+  gather_facts: false
+  any_errors_fatal: true
+  vars_files:
+    - log-cleanup-vars.yml
+  tasks:
+    - name: Write file list to output file on each host
+      lineinfile: create=yes regexp="NONEXISTENTLINE" dest={{tempfile_name}} line="{{item.path}}" state=present
+      with_items: "{{output_of_find.results | map(attribute='files') | list}}"
+      
+    - name: Fetch output files from each host to store on local host
+      fetch:
+        src: "{{tempfile_name}}"
+        dest: "{{tempfile_rootname}}-{{inventory_hostname}}.txt"
+        flat: yes
+        fail_on_missing: no
